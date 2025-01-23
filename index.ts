@@ -29,6 +29,11 @@ function main() {
     async fetch(req) {
       const url = new URL(req.url);
 
+      // Add health check endpoint
+      if (url.pathname === "/health") {
+        return new Response("OK", { status: 200 });
+      }
+
       // Check the path for the webhook token
       if (url.pathname === "/webhook") {
         const token = url.searchParams.get("token");
