@@ -22,7 +22,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log("Starting email server with credentials:", creds.from, creds.to, creds.host, creds.port);
+  console.log(new Date(), "Starting email server with credentials:", creds.from, creds.to, creds.host, creds.port);
 
   Bun.serve({
     port: 8080,
