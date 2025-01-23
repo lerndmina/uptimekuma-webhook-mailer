@@ -103,7 +103,3 @@ bun run format
 # Type check
 bun run typecheck
 ```
-
-## License
-
-MIT
