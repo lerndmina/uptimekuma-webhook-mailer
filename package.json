@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@types/nodemailer": "^6.4.17",
+    "liquidjs": "^10.20.2",
     "nodemailer": "^6.10.0",
     "nodemon": "^3.1.9"
   }
