@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { isUptimeKumaWebhook } from "./types";
 
 const creds = {
   user: process.env.EMAIL_USER,
@@ -30,7 +31,7 @@ function main() {
         if (token === creds.webhookToken) {
           console.log("Valid webhook request with token:", token);
           const emailSent = await sendMail(req);
-          return new Response("Webhook received", { status: 200 });
+          return emailSent;
         } else {
           console.log("Unauthorized request with token:", token);
           // Return a 401 for an invalid token
@@ -69,12 +70,15 @@ async function sendMail(req: Request): Promise<Response> {
   try {
     if (req.body) {
       data = await req.json();
+      if (!isUptimeKumaWebhook(data)) {
+        throw new Error("Invalid data format");
+      }
     } else {
       throw new Error("No request body");
     }
   } catch (e) {
     console.error("Invalid JSON data:", e);
-    return new Response("Invalid JSON data", { status: 400 });
+    return new Response("Invalid JSON data\n" + (e instanceof Error ? e.toString() : String(e)), { status: 400 });
   }
 
   // Request is valid, send the email
