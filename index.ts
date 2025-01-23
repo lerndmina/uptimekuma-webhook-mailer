@@ -82,6 +82,24 @@ async function sendMail(req: Request): Promise<Response> {
 
   console.log("Sending email with data:", data);
 
+  // Handle comma-seperated to emails
+  const sentEmails = [];
+  if (creds.to && creds.to.includes(",")) {
+    const emails = creds.to.split(",").map((email) => email.trim());
+    for (const email of emails) {
+      creds.to = email;
+      const response = await sendEmail(data, valid);
+      sentEmails.push(response);
+    }
+  } else {
+    const response = await sendEmail(data, valid);
+    return response;
+  }
+  console.log(`Sent emails to ${sentEmails.length} recipients.`);
+  return new Response(`Notification Emails sent to ${sentEmails.length} recipients.`, { status: 200 });
+}
+
+async function sendEmail(data: UptimeKumaWebhook, valid: boolean | "TESTING" | undefined): Promise<Response> {
   // Request is valid, send the email
   const transporter = nodemailer.createTransport({
     host: creds.host,
