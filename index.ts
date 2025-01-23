@@ -30,7 +30,7 @@ function main() {
       const url = new URL(req.url);
 
       // Add health check endpoint
-      if (url.pathname === "/health") {
+      if (url.pathname === "/webhook/health") {
         return new Response("OK", { status: 200 });
       }
 
