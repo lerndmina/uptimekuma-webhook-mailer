@@ -13,6 +13,7 @@ const creds = {
   host: process.env.EMAIL_HOST,
   port: process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT) : 587,
   webhookToken: process.env.WEBHOOK_TOKEN,
+  baseUrl: process.env.BASE_URL || "http://localhost:8080",
 };
 
 function main() {
@@ -23,6 +24,8 @@ function main() {
   }
 
   console.log(new Date(), "Starting email server with credentials:", creds.from, creds.to, creds.host, creds.port);
+  console.log("Webhook token:", creds.webhookToken);
+  console.log(`You can build a URL like this to send a webhook request: ${creds.baseUrl}/webhook?token=${creds.webhookToken}`);
 
   Bun.serve({
     port: 8080,
