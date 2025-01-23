@@ -21,11 +21,7 @@ bun install
 
 ## Configuration
 
-Create a 
-
-.env
-
- file with the following variables:
+Create a `.env` file with the following variables:
 
 ```env
 EMAIL_USER=your-email@example.com
