@@ -64,10 +64,12 @@ main();
  */
 async function sendMail(req: Request): Promise<Response> {
   let data;
+  let valid;
   try {
     if (req.body) {
       data = await req.json();
-      if (!isUptimeKumaWebhook(data)) {
+      const valid = isUptimeKumaWebhook(data);
+      if (!valid) {
         throw new Error("Invalid data format");
       }
     } else {
@@ -94,8 +96,8 @@ async function sendMail(req: Request): Promise<Response> {
     from: creds.from,
     to: creds.to,
     subject: data.msg,
-    text: getPlainTextEmail(data),
-    html: await getEmailTextFromFile(data),
+    text: valid === "TESTING" ? getPlainTextEmail(data) : "Testing email, no data provided",
+    html: valid === "TESTING" ? await getEmailTextFromFile(data) : "<h1>Testing email, no data provided</h1>",
   };
 
   await transporter.sendMail(mailOptions);

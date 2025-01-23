@@ -88,9 +88,12 @@ export interface UptimeKumaWebhook {
   msg: string;
 }
 
-export function isUptimeKumaWebhook(data: unknown): data is UptimeKumaWebhook {
+export function isUptimeKumaWebhook(data: unknown): boolean | "TESTING" {
   if (!data || typeof data !== "object") return false;
+
   const webhook = data as Partial<UptimeKumaWebhook>;
+
+  if (webhook.msg?.includes(" Testing")) return "TESTING";
 
   if (!webhook.heartbeat || !webhook.monitor || typeof webhook.msg !== "string") {
     return false;
