@@ -6,7 +6,8 @@ WORKDIR /app
 RUN apk add --no-cache curl
 
 # Copy package files
-COPY package.json bun.lock ./
+COPY package.json ./
+COPY bun.lock ./
 
 # Install dependencies
 RUN bun install --frozen-lockfile
@@ -21,9 +22,9 @@ ENV NODE_ENV=production
 # Expose the port the app runs on
 EXPOSE 8080
 
-# Health check
+# Health check - now using /health endpoint
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/ || exit 1
+  CMD curl -f http://localhost:8080/health || exit 1
 
 # Start the application
 CMD ["bun", "index.ts"]
