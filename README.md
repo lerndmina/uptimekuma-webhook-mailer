@@ -12,8 +12,8 @@ A lightweight email notification service for Uptime Kuma monitoring webhooks. Se
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/mailer.git
-cd mailer
+git clone https://github.com/lerndmina/uptimekuma-webhook-mailer.git
+cd uptimekuma-webhook-mailer
 
 # Install dependencies
 bun install
