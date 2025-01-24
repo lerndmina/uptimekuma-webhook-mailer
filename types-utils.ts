@@ -88,6 +88,30 @@ export interface UptimeKumaWebhook {
   msg: string;
 }
 
+type RequiredCredential = {
+  env: string | undefined;
+  name: string;
+  help: string;
+  optional?: never;
+  default?: never;
+  validator?: (value: string) => [boolean, string];
+};
+
+type OptionalCredential = {
+  env: string | undefined;
+  name: string;
+  help: string;
+  optional: true;
+  default: string;
+  validator?: (value: string) => [boolean, string];
+};
+
+export type CredentialConfig = RequiredCredential | OptionalCredential;
+
+export type CredentialDefinition = {
+  [key: string]: CredentialConfig;
+};
+
 export function isUptimeKumaWebhook(data: unknown): boolean | "TESTING" {
   if (!data || typeof data !== "object") return false;
 
@@ -114,4 +138,18 @@ export function isUptimeKumaWebhook(data: unknown): boolean | "TESTING" {
   }
 
   return true;
+}
+
+export function validateSingleEmail(email: string): [boolean, string] {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return [emailRegex.test(email), `Invalid email address: ${email}`];
+}
+
+export function validateMultipleEmails(emails: string): [boolean, string] {
+  const emailList = emails.split(",");
+  for (const email of emailList) {
+    const [valid, message] = validateSingleEmail(email.trim());
+    if (!valid) return [false, message];
+  }
+  return [true, ""];
 }
