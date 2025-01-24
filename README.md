@@ -24,9 +24,9 @@ bun install
 Create a `.env` file with the following variables:
 
 ```env
-EMAIL_USER=name@example.com,email2@example.com
+EMAIL_USER=name@example.com
 EMAIL_FROM=name@example.com    # Optional, defaults to EMAIL_USER can be an email sender string like `"Uptime Kuma" <name@example.com>`
-EMAIL_TO=recipient@example.com
+EMAIL_TO=recipient@example.com,recipient2@example.com # Optionally supports one or more 'to' addresses comma seperated, no spaces
 EMAIL_PASS=your-smtp-password
 EMAIL_HOST=smtp.example.com
 EMAIL_PORT=587                       # Optional, defaults to 587
