@@ -1,29 +1,108 @@
 import nodemailer from "nodemailer";
-import { isUptimeKumaWebhook, type UptimeKumaMonitor, type UptimeKumaWebhook } from "./types";
+import { isUptimeKumaWebhook, validateMultipleEmails, validateSingleEmail, type CredentialConfig, type CredentialDefinition, type UptimeKumaMonitor, type UptimeKumaWebhook } from "./types-utils";
 import fs from "fs";
 import path from "path";
 import { Liquid } from "liquidjs";
 import { log } from "console";
 
-const creds = {
-  user: process.env.EMAIL_USER,
-  to: process.env.EMAIL_TO,
-  from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-  pass: process.env.EMAIL_PASS,
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT) : 587,
-  webhookToken: process.env.WEBHOOK_TOKEN,
-  baseUrl: process.env.BASE_URL || "http://localhost:8080",
-};
-
-function main() {
-  const missingCreds = Object.keys(creds).filter((key) => !creds[key as keyof typeof creds]);
-  if (missingCreds.length) {
-    console.error("Missing email credentials:", missingCreds.join(", "));
-    process.exit(1);
+let defaultedEnvs: string[] = [];
+function getEnvValue(config: CredentialConfig) {
+  if (config.env) {
+    // If enviroment variable has a validator ? save result of : otherwise assume valid and contiunue
+    const [valid, message] = config.validator ? config.validator(config.env) : [true, ""];
+    if (valid) {
+      return config.env;
+    }
+    throw new Error(`Invalid credential: ${config.name} is invalid. "${message}"\n\nThe application will now exit.`);
   }
 
-  console.log(new Date(), "Starting email server with credentials:", creds.from, creds.to, creds.host, creds.port);
+  if (!config.env && config.optional && config.default) {
+    defaultedEnvs.push(config.name);
+    return config.default;
+  }
+  throw new Error(`Missing credential: env ${config.name} is undefined. Here's a hint: ${config.help}.\n\nThe application will now exit.`);
+}
+
+const credentialDefs: CredentialDefinition = {
+  user: {
+    env: process.env.EMAIL_USER,
+    name: "EMAIL_USER",
+    help: "The SMTP user is required for authentication with the SMTP server",
+  },
+  to: {
+    env: process.env.EMAIL_TO,
+    name: "EMAIL_TO",
+    help: "Recipient email address is required so we know where to send the email",
+    validator: (value) => validateMultipleEmails(value),
+  },
+  from: {
+    env: process.env.EMAIL_FROM,
+    name: "EMAIL_FROM",
+    help: "Sender email address is only required if the smtp user is not the sender",
+    optional: true,
+    default: process.env.EMAIL_USER!,
+    validator: (value) => validateSingleEmail(value),
+  },
+  pass: {
+    env: process.env.EMAIL_PASS,
+    name: "EMAIL_PASS",
+    help: "SMTP password is required... for security reasons, you know? :)",
+  },
+  host: {
+    env: process.env.EMAIL_HOST,
+    name: "EMAIL_HOST",
+    help: "SMTP host server is required so we know where to connect",
+  },
+  port: {
+    env: process.env.EMAIL_PORT,
+    name: "EMAIL_PORT",
+    help: "SMTP port is required",
+    default: "587",
+    optional: true,
+    validator: (value) => {
+      // Check if string contains only digits
+      if (!/^\d+$/.test(value)) {
+        return [false, "Port must be a numeric value"];
+      }
+      const port = parseInt(value);
+      return [port > 0 && port <= 65535, "Port must be between 1 and 65535 (common SMTP ports: 25, 465, 587, 2525), check your SMTP provider for the correct port."];
+    },
+  },
+  webhookToken: {
+    env: process.env.WEBHOOK_TOKEN,
+    name: "WEBHOOK_TOKEN",
+    help: "Webhook token is required for security",
+    validator: (value) => {
+      if (value.length < 8) {
+        return [false, "Webhook token must be at least 8 characters long"];
+      }
+      return [true, ""];
+    },
+  },
+  baseUrl: {
+    env: process.env.BASE_URL,
+    name: "BASE_URL",
+    help: "Base URL for webhook endpoints",
+    optional: true,
+    default: "http://localhost:8080",
+  },
+};
+
+const creds = Object.fromEntries(Object.entries(credentialDefs).map(([key, config]) => [key, getEnvValue(config)]));
+
+function main() {
+  console.log("\n\nHello 👋 We're just getting started...\n\n");
+
+  defaultedEnvs.length > 0 &&
+    console.log(
+      "Defaulted environment variables:",
+      defaultedEnvs,
+      "\n",
+      "The program will continue, but it's recommended to set the environment variable(s), and may cause unexpected behavior.",
+      "\n\n"
+    );
+
+  console.log(new Date(), "Starting email server with credentials: ", creds);
   console.log("Webhook token:", creds.webhookToken);
   console.log(`You can build a URL like this to send a webhook request: ${creds.baseUrl}/webhook?token=${creds.webhookToken}`);
 
@@ -82,6 +161,11 @@ async function sendMail(req: Request): Promise<Response> {
 
   console.log("Sending email with data:", data);
 
+  const extra_inboxes = req.headers.get("extra_inboxes");
+  if (extra_inboxes) {
+    creds.to += `,${extra_inboxes}`;
+  }
+
   // Handle comma-seperated to emails
   const sentEmails = [];
   if (creds.to && creds.to.includes(",")) {
@@ -103,7 +187,8 @@ async function sendEmail(data: UptimeKumaWebhook, valid: boolean | "TESTING" | u
   // Request is valid, send the email
   const transporter = nodemailer.createTransport({
     host: creds.host,
-    port: creds.port,
+    port: parseInt(creds.port),
+    secure: creds.port === "465",
     auth: {
       user: creds.user,
       pass: creds.pass,
