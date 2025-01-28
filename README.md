@@ -31,6 +31,7 @@ EMAIL_PASS=your-smtp-password
 EMAIL_HOST=smtp.example.com
 EMAIL_PORT=587                       # Optional, defaults to 587
 WEBHOOK_TOKEN=your-secret-token
+PORT=8080                            # Optional, defaults to 8080, this is the port the http server will listen on for webhooks. It's recommended to use a reverse proxy like nginx to handle SSL termination and forward requests to this port.
 ```
 
 ## Usage
