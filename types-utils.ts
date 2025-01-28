@@ -140,7 +140,14 @@ export function isUptimeKumaWebhook(data: unknown): boolean | "TESTING" {
   return true;
 }
 
-export function validateSingleEmail(email: string): [boolean, string] {
+export function validateSingleEmail(email: string, permitSenderString?: boolean): [boolean, string] {
+  // If the email is the sender string, we validate it is the following format: "'Sender Name' <email@address>"
+  if (permitSenderString && email.startsWith("'") && email.endsWith(">")) {
+    const senderStringRegex = /^'[^']+' <[^\s@]+@[^\s@]+\.[^\s@]+>$/;
+    if (senderStringRegex.test(email)) return [true, ""];
+    return [false, `Invalid email address: ${email}, expected format: "'Sender Name' <email@address>"`];
+  }
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return [emailRegex.test(email), `Invalid email address: ${email}`];
 }

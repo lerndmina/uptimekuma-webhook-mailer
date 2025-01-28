@@ -41,7 +41,7 @@ const credentialDefs: CredentialDefinition = {
     help: "Sender email address is only required if the smtp user is not the sender",
     optional: true,
     default: process.env.EMAIL_USER!,
-    validator: (value) => validateSingleEmail(value),
+    validator: (value) => validateSingleEmail(value, true),
   },
   pass: {
     env: process.env.EMAIL_PASS,
@@ -107,7 +107,7 @@ function main() {
   console.log(`You can build a URL like this to send a webhook request: ${creds.baseUrl}/webhook?token=${creds.webhookToken}`);
 
   Bun.serve({
-    port: 8080,
+    port: process.env.PORT || 8080,
     async fetch(req) {
       const url = new URL(req.url);
 
