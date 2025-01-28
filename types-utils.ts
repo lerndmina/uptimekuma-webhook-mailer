@@ -117,7 +117,10 @@ export function isUptimeKumaWebhook(data: unknown): boolean | "TESTING" {
 
   const webhook = data as Partial<UptimeKumaWebhook>;
 
-  if (webhook.msg?.endsWith(" Testing")) return "TESTING";
+  if (webhook.msg?.endsWith(" Testing")) {
+    console.log("Received test webhook, skipping validation", webhook.msg);
+    return "TESTING";
+  }
 
   if (!webhook.heartbeat || !webhook.monitor || typeof webhook.msg !== "string") {
     return false;

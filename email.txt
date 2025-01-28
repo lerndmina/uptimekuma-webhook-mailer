@@ -1,0 +1,17 @@
+MONITOR ALERT: {{monitor.name}}
+===============================
+Status: [{% if heartbeat.status == 0 %}🔴 Down{% else %}🟢 Up{% endif %}]
+Time: {{heartbeat.localDateTime}}
+Duration: {{heartbeat.duration}} seconds
+Message: {{heartbeat.msg}}
+
+Monitor Details:
+---------------
+URL: {{monitor.url}}
+Type: {{monitor.type}}
+Retries: {{heartbeat.retries}}
+Priority: {{heartbeat.important ? "High" : "Normal"}}
+
+Timezone Info: {{heartbeat.timezone}} ({{heartbeat.timezoneOffset}})
+
+Looks like your email client doesn't support HTML emails. For a better experience, please enable HTML emails so we can send you fancy emails in the future.

@@ -199,8 +199,8 @@ async function sendEmail(data: UptimeKumaWebhook, valid: boolean | "TESTING" | u
     from: creds.from,
     to: creds.to,
     subject: data.msg,
-    text: valid === "TESTING" ? getPlainTextEmail(data) : "Testing email, no data provided",
-    html: valid === "TESTING" ? await getEmailTextFromFile(data) : "<h1>Testing email, no data provided</h1>",
+    text: valid === "TESTING" ? "Testing email, no data provided" : getPlainTextEmail(data),
+    html: valid === "TESTING" ? "<h1>Testing email, no data provided</h1>" : getEmailTextFromFile(data),
   };
 
   await transporter.sendMail(mailOptions);
@@ -214,37 +214,23 @@ ${JSON.stringify(data, null, 2)}
   );
 }
 
-async function getEmailTextFromFile(data: UptimeKumaWebhook): Promise<string> {
+function getEmailTextFromFile(data: UptimeKumaWebhook): string {
   // Data is stored in email.html in this directory read in the string and return it
   const filePath = path.join(__dirname, "email.html");
   const rawData = fs.readFileSync(filePath, "utf8");
   const engine = new Liquid();
   const tpl = engine.parse(rawData);
-  const html = await engine.render(tpl, data);
+  const html = engine.renderSync(tpl, data);
   return html;
 }
 
 function getPlainTextEmail(data: UptimeKumaWebhook): string {
-  const status = data.heartbeat.status === 0 ? "DOWN" : "UP";
-  return `
-MONITOR ALERT: ${data.monitor.name}
-===============================
-Status: [${status}]
-Time: ${data.heartbeat.localDateTime}
-Duration: ${data.heartbeat.duration} seconds
-Message: ${data.heartbeat.msg}
-
-Monitor Details:
----------------
-URL: ${data.monitor.url}
-Type: ${data.monitor.type}
-Retries: ${data.heartbeat.retries}
-Priority: ${data.heartbeat.important ? "High" : "Normal"}
-
-Timezone Info: ${data.heartbeat.timezone} (${data.heartbeat.timezoneOffset})
-
-Looks like your email client doesn't support HTML emails. For a better experience, please enable HTML emails so we can send you fancy emails in the future.
-`;
+  const filePath = path.join(__dirname, "email.txt");
+  const rawData = fs.readFileSync(filePath, "utf8");
+  const engine = new Liquid();
+  const tpl = engine.parse(rawData);
+  const text = engine.renderSync(tpl, data);
+  return text;
 }
 
 const help = `
